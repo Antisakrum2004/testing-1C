@@ -8,26 +8,58 @@ datasource db {
 }
 
 model TestSession {
-  id          String     @id @default(cuid())
-  title       String     @default("Тестирование 1С")
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
-  items       TestItem[]
+  id        String        @id @default(cuid())
+  title     String        @default("Тестирование 1С")
+  members   SessionMember[]
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+  items     TestItem[]
+}
+
+model SessionMember {
+  id        String       @id @default(cuid())
+  sessionId String
+  name      String
+  color     String       @default("#10b981")
+  createdAt DateTime     @default(now())
+  session   TestSession  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@unique([sessionId, name])
+  @@index([sessionId])
 }
 
 model TestItem {
-  id              String   @id @default(cuid())
+  id              String        @id @default(cuid())
   sessionId       String
   orderNum        Int
-  description     String   @default("")
-  expectedResult  String   @default("")
-  bugOrRemark     String   @default("")
-  isMatched       Boolean  @default(false)
-  screenshot      String   @default("")
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-  session         TestSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  description     String        @default("")
+  expectedResult  String        @default("")
+  bugOrRemark     String        @default("")
+  isMatched       Boolean       @default(false)
+  screenshot      String        @default("")
+  assignee        String        @default("")
+  priority        String        @default("medium")
+  status          String        @default("new")
+  timeSpent       Int           @default(0)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  session         TestSession   @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  comments        TestComment[]
 
   @@index([sessionId])
   @@index([sessionId, orderNum])
+  @@index([assignee])
+  @@index([priority])
+  @@index([status])
+}
+
+model TestComment {
+  id        String   @id @default(cuid())
+  itemId    String
+  author    String
+  text      String
+  createdAt DateTime @default(now())
+  item      TestItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+
+  @@index([itemId])
 }

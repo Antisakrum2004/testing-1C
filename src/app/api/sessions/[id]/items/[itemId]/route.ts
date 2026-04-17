@@ -18,6 +18,10 @@ export async function PUT(
         ...(body.isMatched !== undefined && { isMatched: body.isMatched }),
         ...(body.screenshot !== undefined && { screenshot: body.screenshot }),
         ...(body.orderNum !== undefined && { orderNum: body.orderNum }),
+        ...(body.assignee !== undefined && { assignee: body.assignee }),
+        ...(body.priority !== undefined && { priority: body.priority }),
+        ...(body.status !== undefined && { status: body.status }),
+        ...(body.timeSpent !== undefined && { timeSpent: body.timeSpent }),
       },
     });
 
