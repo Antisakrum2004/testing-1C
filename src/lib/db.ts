@@ -7,10 +7,11 @@ const globalForPrisma = globalThis as unknown as {
 };
 
 function createPrismaClient() {
-  const databaseUrl = process.env.DATABASE_URL;
+  // Vercel Postgres sets both DATABASE_URL and POSTGRES_URL
+  // Try POSTGRES_URL first (Vercel Postgres standard), then DATABASE_URL
+  const databaseUrl = process.env.POSTGRES_URL || process.env.DATABASE_URL;
   
   if (databaseUrl && databaseUrl.startsWith("postgres")) {
-    // Use Neon serverless adapter for PostgreSQL (Vercel)
     const sql = neon(databaseUrl);
     const adapter = new PrismaNeon(sql);
     return new PrismaClient({ adapter });
