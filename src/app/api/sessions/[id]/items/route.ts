@@ -30,8 +30,12 @@ export async function POST(
     });
 
     return NextResponse.json(item);
-  } catch {
-    return NextResponse.json({ error: "Failed to create item" }, { status: 500 });
+  } catch (error) {
+    console.error("POST /api/sessions/[id]/items error:", error);
+    return NextResponse.json(
+      { error: "Failed to create item", details: String(error) },
+      { status: 500 }
+    );
   }
 }
 
@@ -46,7 +50,11 @@ export async function GET(
       orderBy: { orderNum: "asc" },
     });
     return NextResponse.json(items);
-  } catch {
-    return NextResponse.json({ error: "Failed to fetch items" }, { status: 500 });
+  } catch (error) {
+    console.error("GET /api/sessions/[id]/items error:", error);
+    return NextResponse.json(
+      { error: "Failed to fetch items", details: String(error) },
+      { status: 500 }
+    );
   }
 }

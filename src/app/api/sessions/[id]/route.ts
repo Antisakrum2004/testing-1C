@@ -19,8 +19,9 @@ export async function GET(
       return NextResponse.json({ error: "Session not found" }, { status: 404 });
     }
     return NextResponse.json(session);
-  } catch {
-    return NextResponse.json({ error: "Failed to fetch session" }, { status: 500 });
+  } catch (error) {
+    console.error("GET /api/sessions/[id] error:", error);
+    return NextResponse.json({ error: "Failed to fetch session", details: String(error) }, { status: 500 });
   }
 }
 
@@ -36,8 +37,9 @@ export async function PUT(
       data: { title: body.title },
     });
     return NextResponse.json(session);
-  } catch {
-    return NextResponse.json({ error: "Failed to update session" }, { status: 500 });
+  } catch (error) {
+    console.error("PUT /api/sessions/[id] error:", error);
+    return NextResponse.json({ error: "Failed to update session", details: String(error) }, { status: 500 });
   }
 }
 
@@ -49,7 +51,8 @@ export async function DELETE(
     const { id } = await params;
     await db.testSession.delete({ where: { id } });
     return NextResponse.json({ success: true });
-  } catch {
-    return NextResponse.json({ error: "Failed to delete session" }, { status: 500 });
+  } catch (error) {
+    console.error("DELETE /api/sessions/[id] error:", error);
+    return NextResponse.json({ error: "Failed to delete session", details: String(error) }, { status: 500 });
   }
 }

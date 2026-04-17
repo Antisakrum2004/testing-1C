@@ -10,8 +10,12 @@ export async function POST(request: NextRequest) {
       },
     });
     return NextResponse.json(session);
-  } catch {
-    return NextResponse.json({ error: "Failed to create session" }, { status: 500 });
+  } catch (error) {
+    console.error("POST /api/sessions error:", error);
+    return NextResponse.json(
+      { error: "Failed to create session", details: String(error) },
+      { status: 500 }
+    );
   }
 }
 
@@ -22,7 +26,11 @@ export async function GET() {
       include: { _count: { select: { items: true } } },
     });
     return NextResponse.json(sessions);
-  } catch {
-    return NextResponse.json({ error: "Failed to fetch sessions" }, { status: 500 });
+  } catch (error) {
+    console.error("GET /api/sessions error:", error);
+    return NextResponse.json(
+      { error: "Failed to fetch sessions", details: String(error) },
+      { status: 500 }
+    );
   }
 }

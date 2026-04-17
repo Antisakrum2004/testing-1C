@@ -22,8 +22,12 @@ export async function PUT(
     });
 
     return NextResponse.json(item);
-  } catch {
-    return NextResponse.json({ error: "Failed to update item" }, { status: 500 });
+  } catch (error) {
+    console.error("PUT /api/sessions/[id]/items/[itemId] error:", error);
+    return NextResponse.json(
+      { error: "Failed to update item", details: String(error) },
+      { status: 500 }
+    );
   }
 }
 
@@ -48,7 +52,11 @@ export async function DELETE(
     }
 
     return NextResponse.json(item);
-  } catch {
-    return NextResponse.json({ error: "Failed to delete item" }, { status: 500 });
+  } catch (error) {
+    console.error("DELETE /api/sessions/[id]/items/[itemId] error:", error);
+    return NextResponse.json(
+      { error: "Failed to delete item", details: String(error) },
+      { status: 500 }
+    );
   }
 }
