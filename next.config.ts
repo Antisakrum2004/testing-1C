@@ -5,6 +5,10 @@ const nextConfig: NextConfig = {
     ignoreBuildErrors: true,
   },
   reactStrictMode: false,
+  serverExternalPackages: [
+    "@prisma/adapter-neon",
+    "@neondatabase/serverless",
+  ],
 };
 
 export default nextConfig;
