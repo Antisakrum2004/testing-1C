@@ -713,6 +713,49 @@ function TestForm() {
   );
 }
 
+/* ─── Auto-resizing Textarea ─── */
+function AutoTextarea({ defaultValue, value, onChange, onKeyDown, placeholder, style }: {
+  defaultValue?: string;
+  value?: string;
+  onChange?: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
+  onKeyDown?: (e: React.KeyboardEvent<HTMLTextAreaElement>) => void;
+  placeholder?: string;
+  style?: React.CSSProperties;
+}) {
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const currentValue = value !== undefined ? value : (defaultValue || "");
+
+  useEffect(() => {
+    const el = textareaRef.current;
+    if (el) {
+      el.style.height = 'auto';
+      el.style.height = el.scrollHeight + 'px';
+    }
+  }, [currentValue]);
+
+  return (
+    <textarea
+      ref={textareaRef}
+      defaultValue={defaultValue}
+      value={value}
+      onChange={onChange}
+      onKeyDown={onKeyDown}
+      placeholder={placeholder}
+      rows={1}
+      style={{
+        width: "100%", background: "rgba(10,12,18,0.6)",
+        border: "1px solid var(--glass-border)", borderRadius: 6,
+        color: "var(--text)", fontFamily: "'JetBrains Mono', monospace", fontSize: 12,
+        padding: "8px 10px", outline: "none", transition: "border-color 0.15s, box-shadow 0.15s",
+        lineHeight: 1.5, resize: "none", minHeight: 38, overflow: "hidden",
+        ...style,
+      }}
+      onFocus={e => { e.currentTarget.style.borderColor = "var(--accent)"; e.currentTarget.style.boxShadow = "0 0 0 3px var(--accent-glow)"; }}
+      onBlur={e => { e.currentTarget.style.borderColor = "var(--glass-border)"; e.currentTarget.style.boxShadow = "none"; }}
+    />
+  );
+}
+
 /* ─── Test Item Card ─── */
 function TestItemCard({
   item,
@@ -737,7 +780,6 @@ function TestItemCard({
   fileInputRef: (el: HTMLInputElement | null) => void;
   triggerFileInput: () => void;
 }) {
-  const [expanded, setExpanded] = useState(item.bugOrRemark.length > 0 || item.screenshot.length > 0 || !item.isMatched);
   const [uploading, setUploading] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -750,6 +792,16 @@ function TestItemCard({
       onUpdate({ [field]: value });
     }, 400);
   }, [onUpdate]);
+
+  // Escape key to close preview
+  useEffect(() => {
+    if (!previewOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setPreviewOpen(false);
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [previewOpen]);
 
   // Handle screenshot upload
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -772,11 +824,11 @@ function TestItemCard({
       animation: `fadeInUp 0.3s ease both`,
       animationDelay: `${Math.min(index * 0.03, 0.3)}s`,
       boxShadow: "0 2px 8px rgba(0,0,0,0.2), 0 12px 28px rgba(0,0,0,0.3), 0 32px 64px rgba(0,0,0,0.2)",
-      marginTop: 14, transition: "border-color 0.3s ease",
+      marginTop: 8, transition: "border-color 0.3s ease",
     }}>
       {/* ─── Card Header ─── */}
       <div style={{
-        padding: "12px 18px", borderBottom: "1px solid var(--glass-border)",
+        padding: "10px 14px", borderBottom: "1px solid var(--glass-border)",
         display: "flex", alignItems: "center", gap: 10,
         background: "var(--surface2)", flexWrap: "wrap",
       }}>
@@ -876,41 +928,21 @@ function TestItemCard({
               Удалить?
             </button>
           )}
-
-          <button
-            onClick={() => setExpanded(!expanded)}
-            title={expanded ? "Свернуть" : "Развернуть"}
-            style={{
-              width: 30, height: 30, border: "1px solid var(--glass-border)", background: "var(--surface2)",
-              borderRadius: 6, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
-              color: "var(--text-d)", transition: "all 0.15s, transform 0.3s ease", padding: 0,
-              transform: expanded ? "rotate(180deg)" : "rotate(0deg)",
-            }}
-            onMouseEnter={e => { e.currentTarget.style.borderColor = "var(--glass-border-h)"; e.currentTarget.style.color = "var(--text-m)"; }}
-            onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--glass-border)"; e.currentTarget.style.color = "var(--text-d)"; }}
-          >
-            <ChevronDownIcon />
-          </button>
         </div>
       </div>
 
-      {/* ─── Card Body ─── */}
-      <div style={{
-        padding: expanded ? 18 : 0,
-        maxHeight: expanded ? 2000 : 0,
-        overflow: "hidden",
-        transition: "max-height 0.4s ease, padding 0.3s ease",
-      }}>
-        {/* Field 1: Что тестируем */}
-        <div style={{ marginBottom: 14 }}>
+      {/* ─── Card Body (3 columns horizontal layout) ─── */}
+      <div style={{ display: "flex", gap: 12, padding: 14 }}>
+        {/* Column 1: Что тестируем */}
+        <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 4 }}>
           <label style={{
-            display: "flex", alignItems: "center", gap: 6,
-            fontSize: 11, fontWeight: 500, color: "var(--text-m)",
-            textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 6,
+            display: "flex", alignItems: "center", gap: 4,
+            fontSize: 10, fontWeight: 500, color: "var(--text-m)",
+            textTransform: "uppercase", letterSpacing: "0.08em",
           }}>
-            Что тестируем <span style={{ color: "var(--danger)", fontSize: 14, lineHeight: 1 }}>*</span>
+            Что тестируем <span style={{ color: "var(--danger)", fontSize: 12, lineHeight: 1 }}>*</span>
           </label>
-          <textarea
+          <AutoTextarea
             defaultValue={item.description}
             onChange={e => debouncedUpdate("description", e.target.value)}
             onKeyDown={e => {
@@ -919,101 +951,59 @@ function TestItemCard({
                 onAddAfter();
               }
             }}
-            placeholder="Описание функционала или процесса, который тестируем..."
-            rows={2}
-            style={{
-              width: "100%", background: "rgba(10,12,18,0.6)",
-              border: "1px solid var(--glass-border)", borderRadius: 6,
-              color: "var(--text)", fontFamily: "'JetBrains Mono', monospace", fontSize: 13,
-              padding: "9px 12px", outline: "none", transition: "border-color 0.15s, box-shadow 0.15s",
-              lineHeight: 1.6, resize: "vertical", minHeight: 38,
-            }}
-            onFocus={e => { e.currentTarget.style.borderColor = "var(--accent)"; e.currentTarget.style.boxShadow = "0 0 0 3px var(--accent-glow)"; }}
-            onBlur={e => { e.currentTarget.style.borderColor = "var(--glass-border)"; e.currentTarget.style.boxShadow = "none"; }}
+            placeholder="Что тестируем..."
           />
-          <div style={{ display: "flex", justifyContent: "space-between", marginTop: 4 }}>
-            <div style={{ fontSize: 10, color: "var(--text-d)" }}>
-              Заполняет постановщик
-            </div>
-            <div style={{ fontSize: 10, color: "var(--text-d)" }}>
-              {item.description.length} симв.
-            </div>
+          <div style={{ display: "flex", justifyContent: "space-between" }}>
+            <span style={{ fontSize: 9, color: "var(--text-d)" }}>Постановщик</span>
+            <span style={{ fontSize: 9, color: "var(--text-d)" }}>{item.description.length} симв.</span>
           </div>
         </div>
 
-        {/* Field 2: Ожидаемый результат */}
-        <div style={{ marginBottom: 14 }}>
+        {/* Column 2: Ожидаемый результат */}
+        <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 4 }}>
           <label style={{
-            display: "flex", alignItems: "center", gap: 6,
-            fontSize: 11, fontWeight: 500, color: "var(--text-m)",
-            textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 6,
+            display: "flex", alignItems: "center", gap: 4,
+            fontSize: 10, fontWeight: 500, color: "var(--text-m)",
+            textTransform: "uppercase", letterSpacing: "0.08em",
           }}>
-            Ожидаемый результат <span style={{ color: "var(--danger)", fontSize: 14, lineHeight: 1 }}>*</span>
+            Ожидаемый результат <span style={{ color: "var(--danger)", fontSize: 12, lineHeight: 1 }}>*</span>
           </label>
-          <textarea
+          <AutoTextarea
             defaultValue={item.expectedResult}
             onChange={e => debouncedUpdate("expectedResult", e.target.value)}
-            placeholder="Какой результат должен быть при корректной работе..."
-            rows={2}
-            style={{
-              width: "100%", background: "rgba(10,12,18,0.6)",
-              border: "1px solid var(--glass-border)", borderRadius: 6,
-              color: "var(--text)", fontFamily: "'JetBrains Mono', monospace", fontSize: 13,
-              padding: "9px 12px", outline: "none", transition: "border-color 0.15s, box-shadow 0.15s",
-              lineHeight: 1.6, resize: "vertical", minHeight: 38,
-            }}
-            onFocus={e => { e.currentTarget.style.borderColor = "var(--accent)"; e.currentTarget.style.boxShadow = "0 0 0 3px var(--accent-glow)"; }}
-            onBlur={e => { e.currentTarget.style.borderColor = "var(--glass-border)"; e.currentTarget.style.boxShadow = "none"; }}
+            placeholder="Ожидаемый результат..."
           />
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 4 }}>
-            <div style={{ fontSize: 10, color: "var(--text-d)" }}>
-              Заполняет постановщик
-            </div>
-            <div style={{ fontSize: 10, color: "var(--text-d)" }}>
-              {item.expectedResult.length} симв.
-            </div>
+          <div style={{ display: "flex", justifyContent: "space-between" }}>
+            <span style={{ fontSize: 9, color: "var(--text-d)" }}>Постановщик</span>
+            <span style={{ fontSize: 9, color: "var(--text-d)" }}>{item.expectedResult.length} симв.</span>
           </div>
         </div>
 
-        {/* ─── Bug / Remark Section ─── */}
-        <div style={{
-          border: `1px solid ${item.bugOrRemark.length > 0 ? "rgba(255,79,79,0.2)" : "var(--glass-border)"}`,
-          borderRadius: 8, padding: 14, background: item.bugOrRemark.length > 0 ? "rgba(255,79,79,0.03)" : "rgba(10,12,18,0.3)",
-          transition: "border-color 0.3s ease, background 0.3s ease",
-        }}>
+        {/* Column 3: Баг/замечание + скриншот */}
+        <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 4 }}>
           <label style={{
-            display: "flex", alignItems: "center", gap: 6,
-            fontSize: 11, fontWeight: 500, color: item.bugOrRemark.length > 0 ? "var(--danger)" : "var(--text-m)",
-            textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 6,
+            display: "flex", alignItems: "center", gap: 4,
+            fontSize: 10, fontWeight: 500,
+            color: item.bugOrRemark.length > 0 ? "var(--danger)" : "var(--text-m)",
+            textTransform: "uppercase", letterSpacing: "0.08em",
           }}>
-            {item.bugOrRemark.length > 0 ? "⚠" : "📝"} Баг или замечание
+            {item.bugOrRemark.length > 0 ? "⚠" : "📝"} Баг/замечание
           </label>
-          <textarea
+          <AutoTextarea
             defaultValue={item.bugOrRemark}
             onChange={e => debouncedUpdate("bugOrRemark", e.target.value)}
-            placeholder="Опишите найденный баг или замечание тестировщика..."
-            rows={3}
+            placeholder="Баг или замечание..."
             style={{
-              width: "100%", background: "rgba(10,12,18,0.6)",
-              border: "1px solid var(--glass-border)", borderRadius: 6,
-              color: "var(--text)", fontFamily: "'JetBrains Mono', monospace", fontSize: 13,
-              padding: "9px 12px", outline: "none", transition: "border-color 0.15s, box-shadow 0.15s",
-              lineHeight: 1.6, resize: "vertical", minHeight: 56,
+              borderColor: item.bugOrRemark.length > 0 ? "rgba(255,79,79,0.25)" : undefined,
             }}
-            onFocus={e => { e.currentTarget.style.borderColor = "var(--danger)"; e.currentTarget.style.boxShadow = "0 0 0 3px rgba(255,79,79,0.12)"; }}
-            onBlur={e => { e.currentTarget.style.borderColor = "var(--glass-border)"; e.currentTarget.style.boxShadow = "none"; }}
           />
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 4 }}>
-            <div style={{ fontSize: 10, color: "var(--text-d)" }}>
-              Заполняет тестировщик
-            </div>
-            <div style={{ fontSize: 10, color: "var(--text-d)" }}>
-              {item.bugOrRemark.length} симв.
-            </div>
+          <div style={{ display: "flex", justifyContent: "space-between" }}>
+            <span style={{ fontSize: 9, color: "var(--text-d)" }}>Тестировщик</span>
+            <span style={{ fontSize: 9, color: "var(--text-d)" }}>{item.bugOrRemark.length} симв.</span>
           </div>
 
           {/* Screenshot section */}
-          <div style={{ marginTop: 10 }}>
+          <div style={{ marginTop: 6 }}>
             <input
               ref={fileInputRef}
               type="file"
@@ -1029,7 +1019,7 @@ function TestItemCard({
                   style={{
                     borderRadius: 6, overflow: "hidden", cursor: "pointer",
                     border: "1px solid var(--glass-border)", transition: "border-color 0.15s",
-                    maxHeight: 200,
+                    maxHeight: 120,
                   }}
                   onMouseEnter={e => e.currentTarget.style.borderColor = "var(--accent-dim)"}
                   onMouseLeave={e => e.currentTarget.style.borderColor = "var(--glass-border)"}
@@ -1037,31 +1027,31 @@ function TestItemCard({
                   <img
                     src={item.screenshot}
                     alt="Скриншот бага"
-                    style={{ width: "100%", display: "block", objectFit: "cover", maxHeight: 200 }}
+                    style={{ width: "100%", display: "block", objectFit: "cover", maxHeight: 120 }}
                   />
                 </div>
-                <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 6 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 4, marginTop: 4 }}>
                   <button
                     onClick={triggerFileInput}
                     style={{
-                      fontSize: 10, fontWeight: 600, padding: "4px 8px", borderRadius: 4,
+                      fontSize: 9, fontWeight: 600, padding: "3px 6px", borderRadius: 4,
                       border: "1px solid var(--glass-border-h)", background: "var(--surface2)",
                       color: "var(--text-m)", cursor: "pointer", transition: "all 0.15s",
-                      display: "flex", alignItems: "center", gap: 4, fontFamily: "'JetBrains Mono', monospace",
+                      display: "flex", alignItems: "center", gap: 3, fontFamily: "'JetBrains Mono', monospace",
                     }}
                     onMouseEnter={e => { e.currentTarget.style.borderColor = "var(--accent-dim)"; e.currentTarget.style.color = "var(--accent)"; }}
                     onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--glass-border-h)"; e.currentTarget.style.color = "var(--text-m)"; }}
                   >
-                    <ImagePlusIcon size={12} />
+                    <ImagePlusIcon size={10} />
                     Заменить
                   </button>
                   <button
                     onClick={() => onUpdate({ screenshot: "" })}
                     style={{
-                      fontSize: 10, fontWeight: 600, padding: "4px 8px", borderRadius: 4,
+                      fontSize: 9, fontWeight: 600, padding: "3px 6px", borderRadius: 4,
                       border: "1px solid var(--glass-border)", background: "var(--surface2)",
                       color: "var(--text-d)", cursor: "pointer", transition: "all 0.15s",
-                      display: "flex", alignItems: "center", gap: 4, fontFamily: "'JetBrains Mono', monospace",
+                      display: "flex", alignItems: "center", gap: 3, fontFamily: "'JetBrains Mono', monospace",
                     }}
                     onMouseEnter={e => { e.currentTarget.style.borderColor = "rgba(255,79,79,0.3)"; e.currentTarget.style.color = "var(--danger)"; }}
                     onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--glass-border)"; e.currentTarget.style.color = "var(--text-d)"; }}
@@ -1069,9 +1059,6 @@ function TestItemCard({
                     <XIcon size={10} />
                     Удалить
                   </button>
-                  <span style={{ fontSize: 10, color: "var(--text-d)", marginLeft: "auto" }}>
-                    Нажмите для предпросмотра
-                  </span>
                 </div>
               </div>
             ) : (
@@ -1079,17 +1066,17 @@ function TestItemCard({
                 onClick={triggerFileInput}
                 disabled={uploading}
                 style={{
-                  width: "100%", padding: "12px", border: "1px dashed var(--glass-border)",
+                  width: "100%", padding: "8px 6px", border: "1px dashed var(--glass-border)",
                   borderRadius: 6, background: "rgba(10,12,18,0.4)", cursor: uploading ? "wait" : "pointer",
-                  display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
-                  color: "var(--text-d)", fontFamily: "'JetBrains Mono', monospace", fontSize: 12,
+                  display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+                  color: "var(--text-d)", fontFamily: "'JetBrains Mono', monospace", fontSize: 10,
                   transition: "all 0.15s",
                 }}
                 onMouseEnter={e => { if (!uploading) { e.currentTarget.style.borderColor = "var(--accent)"; e.currentTarget.style.background = "var(--accent-glow)"; e.currentTarget.style.color = "var(--accent)"; } }}
                 onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--glass-border)"; e.currentTarget.style.background = "rgba(10,12,18,0.4)"; e.currentTarget.style.color = "var(--text-d)"; }}
               >
-                {uploading ? <UploadSpinner /> : <ImagePlusIcon />}
-                {uploading ? "Загрузка..." : "Загрузить скриншот"}
+                {uploading ? <UploadSpinner /> : <ImagePlusIcon size={12} />}
+                {uploading ? "Загрузка..." : "Скриншот"}
               </button>
             )}
           </div>
@@ -1106,10 +1093,11 @@ function TestItemCard({
           }}
           onClick={() => setPreviewOpen(false)}
         >
-          <div style={{ position: "relative", maxWidth: "90vw", maxHeight: "90vh" }} onClick={e => e.stopPropagation()}>
+          <div style={{ position: "relative", maxWidth: "90vw", maxHeight: "90vh" }}>
             <img
               src={item.screenshot}
               alt="Скриншот бага"
+              onClick={e => e.stopPropagation()}
               style={{ maxWidth: "90vw", maxHeight: "85vh", borderRadius: 8, display: "block", objectFit: "contain" }}
             />
             <button
