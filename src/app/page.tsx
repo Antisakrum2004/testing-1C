@@ -839,23 +839,49 @@ function TestForm() {
             Открыть существующую
           </button>
           {showSessions && sessionsList.length > 0 && (
-            <div style={{ marginTop: 16, maxHeight: 240, overflowY: "auto", textAlign: "left", border: "1px solid var(--glass-border)", borderRadius: 8, background: "rgba(10,12,18,0.6)" }}>
+            <div style={{ marginTop: 16, maxHeight: 300, overflowY: "auto", textAlign: "left", border: "1px solid var(--glass-border)", borderRadius: 8, background: "rgba(10,12,18,0.6)" }}>
               {sessionsList.map((s) => (
-                <button key={s.id} onClick={() => window.location.href = `?session=${s.id}`} style={{
-                  display: "flex", alignItems: "center", justifyContent: "space-between",
-                  width: "100%", padding: "10px 14px", background: "transparent", border: "none",
-                  borderBottom: "1px solid var(--glass-border)", cursor: "pointer",
-                  color: "var(--text)", fontFamily: "'JetBrains Mono', monospace", fontSize: 12,
-                  transition: "background 0.15s", textAlign: "left" as const,
-                }}
-                  onMouseEnter={e => e.currentTarget.style.background = "var(--accent-glow)"}
-                  onMouseLeave={e => e.currentTarget.style.background = "transparent"}
-                >
-                  <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{s.title}</span>
-                  <span style={{ color: "var(--text-d)", flexShrink: 0, marginLeft: 12 }}>
-                    {s._count.items} шт · {new Date(s.updatedAt).toLocaleDateString("ru-RU")}
-                  </span>
-                </button>
+                <div key={s.id} style={{
+                  display: "flex", alignItems: "center", borderBottom: "1px solid var(--glass-border)",
+                }}>
+                  <button onClick={() => window.location.href = `?session=${s.id}`} style={{
+                    flex: 1, display: "flex", alignItems: "center", justifyContent: "space-between",
+                    padding: "10px 14px", background: "transparent", border: "none",
+                    cursor: "pointer", color: "var(--text)", fontFamily: "'JetBrains Mono', monospace", fontSize: 12,
+                    transition: "background 0.15s", textAlign: "left" as const,
+                  }}
+                    onMouseEnter={e => e.currentTarget.style.background = "var(--accent-glow)"}
+                    onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+                  >
+                    <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{s.title}</span>
+                    <span style={{ color: "var(--text-d)", flexShrink: 0, marginLeft: 12 }}>
+                      {s._count.items} шт · {new Date(s.updatedAt).toLocaleDateString("ru-RU")}
+                    </span>
+                  </button>
+                  <button
+                    onClick={async (e) => {
+                      e.stopPropagation();
+                      if (!confirm(`Удалить сессию «${s.title}»? Все тест-кейсы будут потеряны.`)) return;
+                      const res = await fetch(`/api/sessions/${s.id}`, { method: "DELETE" });
+                      if (res.ok) {
+                        setSessionsList(prev => prev.filter(x => x.id !== s.id));
+                        showToast("Сессия удалена", "success");
+                      } else {
+                        showToast("Ошибка удаления", "error");
+                      }
+                    }}
+                    title="Удалить сессию"
+                    style={{
+                      padding: "10px 12px", background: "transparent", border: "none",
+                      cursor: "pointer", color: "var(--text-d)", fontSize: 14,
+                      transition: "color 0.15s", flexShrink: 0, lineHeight: 1,
+                    }}
+                    onMouseEnter={e => e.currentTarget.style.color = "var(--danger)"}
+                    onMouseLeave={e => e.currentTarget.style.color = "var(--text-d)"}
+                  >
+                    ✕
+                  </button>
+                </div>
               ))}
             </div>
           )}
