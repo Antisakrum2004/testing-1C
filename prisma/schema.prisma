@@ -1,0 +1,33 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model TestSession {
+  id          String     @id @default(cuid())
+  title       String     @default("Тестирование 1С")
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  items       TestItem[]
+}
+
+model TestItem {
+  id              String   @id @default(cuid())
+  sessionId       String
+  orderNum        Int
+  description     String   @default("")
+  expectedResult  String   @default("")
+  bugOrRemark     String   @default("")
+  isMatched       Boolean  @default(false)
+  screenshot      String   @default("")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  session         TestSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@index([sessionId])
+  @@index([sessionId, orderNum])
+}
