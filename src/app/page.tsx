@@ -75,7 +75,7 @@ const MEMBER_COLORS = [
   "#ec4899", "#f43f5e", "#14b8a6", "#6366f1",
 ];
 
-const DEFAULT_MEMBERS = ["Константин", "Александр", "Саша", "Тимур", "Елена", "Ольга", "Тест"];
+const DEFAULT_MEMBERS = ["Константин", "Александр", "Саша", "Тимур", "Елена", "Ольга", "Тест", "АМ", "ВМ"];
 
 /* ─── Helpers ─── */
 function formatTime(seconds: number): string {
