@@ -925,6 +925,7 @@ function TestForm() {
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           <div style={{ fontFamily: "'Unbounded', sans-serif", fontSize: 14, fontWeight: 700, letterSpacing: "-0.02em" }}>
             <span style={{ color: "var(--accent)" }}>1С</span> Тест
+            <span style={{ fontSize: 9, color: "var(--text-d)", marginLeft: 8, fontFamily: "'JetBrains Mono', monospace", fontWeight: 400 }}>v2.0</span>
           </div>
           {titleEditing ? (
             <input
