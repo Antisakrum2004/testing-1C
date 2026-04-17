@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 
 /* ─── Types ─── */
@@ -139,8 +139,25 @@ function Toast({ message, type, onClose }: { message: string; type: "success" | 
   );
 }
 
-/* ─── Main App ─── */
-export default function TestForm() {
+/* ─── Loading fallback ─── */
+function Loading() {
+  return (
+    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "100vh" }}>
+      <div style={{ color: "var(--text-m)", fontFamily: "'JetBrains Mono', monospace" }}>Загрузка...</div>
+    </div>
+  );
+}
+
+/* ─── Main App (wrapped in Suspense for useSearchParams) ─── */
+export default function TestFormPage() {
+  return (
+    <Suspense fallback={<Loading />}>
+      <TestForm />
+    </Suspense>
+  );
+}
+
+function TestForm() {
   const searchParams = useSearchParams();
   const sessionIdParam = searchParams.get("session");
 
