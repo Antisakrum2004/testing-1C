@@ -75,7 +75,7 @@ const MEMBER_COLORS = [
   "#ec4899", "#f43f5e", "#14b8a6", "#6366f1",
 ];
 
-const DEFAULT_MEMBERS = ["Иван", "Мария", "Алексей", "Ольга", "Дмитрий", "Елена", "Сергей", "Анна"];
+const DEFAULT_MEMBERS = ["Константин", "Александр", "Саша", "Тимур", "Елена", "Ольга", "Тест"];
 
 /* ─── Helpers ─── */
 function formatTime(seconds: number): string {
@@ -1711,31 +1711,35 @@ function TestItemCard({
             <span style={{ fontSize: 9, color: "var(--text-d)" }}>{item.bugOrRemark.length} симв.</span>
           </div>
 
-          {/* Assignee Quick-Click Chips */}
+          {/* Assignee Quick-Click Chips (radio-style like Bitrix crew-grid) */}
           <div style={{ marginTop: 4 }}>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
               {members.map(m => {
                 const isActive = item.assignee === m.name;
+                const isDimmed = !isActive && item.assignee !== "";
                 return (
                   <button
                     key={m.id}
                     onClick={() => onUpdate({ assignee: isActive ? "" : m.name })}
                     title={m.name}
                     style={{
-                      display: "flex", alignItems: "center", gap: 5,
-                      padding: "3px 8px", borderRadius: 5,
+                      display: "flex", alignItems: "center", gap: 7,
+                      padding: "6px 12px", borderRadius: 6,
                       border: `1px solid ${isActive ? "var(--accent-dim)" : "var(--glass-border-h)"}`,
                       background: isActive ? "var(--accent-glow-s)" : "var(--surface2, rgba(18,21,31,0.4))",
                       color: isActive ? "var(--accent)" : "var(--text-m)",
-                      cursor: "pointer", transition: "all 0.2s", userSelect: "none",
+                      cursor: isDimmed ? "default" : "pointer",
+                      transition: "all 0.2s", userSelect: "none",
                       fontFamily: "'JetBrains Mono', monospace", fontSize: 10,
+                      opacity: isDimmed ? 0.45 : 1,
+                      pointerEvents: isDimmed ? "none" : "auto",
                     }}
-                    onMouseEnter={e => { if (!isActive) { e.currentTarget.style.borderColor = "rgba(255,255,255,0.15)"; e.currentTarget.style.color = "var(--text)"; } }}
-                    onMouseLeave={e => { if (!isActive) { e.currentTarget.style.borderColor = "var(--glass-border-h)"; e.currentTarget.style.color = "var(--text-m)"; } }}
+                    onMouseEnter={e => { if (!isActive && !isDimmed) { e.currentTarget.style.borderColor = "rgba(255,255,255,0.15)"; e.currentTarget.style.color = "var(--text)"; } }}
+                    onMouseLeave={e => { if (!isActive && !isDimmed) { e.currentTarget.style.borderColor = "var(--glass-border-h)"; e.currentTarget.style.color = "var(--text-m)"; } }}
                   >
                     <span style={{
                       width: 7, height: 7, borderRadius: "50%", flexShrink: 0,
-                      background: isActive ? m.color : "var(--text-d, #4a5270)",
+                      background: isActive ? m.color : (isDimmed ? "var(--dim-red, rgba(255,79,79,0.35))" : "var(--text-d, #4a5270)"),
                       transition: "all 0.2s",
                       boxShadow: isActive ? `0 0 6px ${m.color}40` : "none",
                     }} />
