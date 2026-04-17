@@ -1711,36 +1711,38 @@ function TestItemCard({
             <span style={{ fontSize: 9, color: "var(--text-d)" }}>{item.bugOrRemark.length} симв.</span>
           </div>
 
-          {/* Assignee Dropdown */}
-          <div style={{ marginTop: 4, position: "relative" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-              <span style={{ fontSize: 9, color: "var(--text-d)", textTransform: "uppercase", letterSpacing: "0.06em" }}>Исполнитель:</span>
-              <select
-                value={item.assignee}
-                onChange={e => onUpdate({ assignee: e.target.value })}
-                style={{
-                  flex: 1, background: "rgba(10,12,18,0.6)", border: "1px solid var(--glass-border)",
-                  borderRadius: 5, color: "var(--text)", fontFamily: "'JetBrains Mono', monospace", fontSize: 10,
-                  padding: "3px 6px", outline: "none", cursor: "pointer",
-                }}
-                onFocus={e => e.currentTarget.style.borderColor = "var(--accent-dim)"}
-                onBlur={e => e.currentTarget.style.borderColor = "var(--glass-border)"}
-              >
-                <option value="">Не назначен</option>
-                {members.map(m => (
-                  <option key={m.id} value={m.name}>{m.name}</option>
-                ))}
-              </select>
-              {item.assignee && (
-                <div style={{
-                  width: 14, height: 14, borderRadius: "50%",
-                  background: getMemberColor(item.assignee, members),
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  fontSize: 7, fontWeight: 700, color: "#fff", flexShrink: 0,
-                }}>
-                  {item.assignee[0]}
-                </div>
-              )}
+          {/* Assignee Quick-Click Chips */}
+          <div style={{ marginTop: 4 }}>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
+              {members.map(m => {
+                const isActive = item.assignee === m.name;
+                return (
+                  <button
+                    key={m.id}
+                    onClick={() => onUpdate({ assignee: isActive ? "" : m.name })}
+                    title={m.name}
+                    style={{
+                      display: "flex", alignItems: "center", gap: 5,
+                      padding: "3px 8px", borderRadius: 5,
+                      border: `1px solid ${isActive ? "var(--accent-dim)" : "var(--glass-border-h)"}`,
+                      background: isActive ? "var(--accent-glow-s)" : "var(--surface2, rgba(18,21,31,0.4))",
+                      color: isActive ? "var(--accent)" : "var(--text-m)",
+                      cursor: "pointer", transition: "all 0.2s", userSelect: "none",
+                      fontFamily: "'JetBrains Mono', monospace", fontSize: 10,
+                    }}
+                    onMouseEnter={e => { if (!isActive) { e.currentTarget.style.borderColor = "rgba(255,255,255,0.15)"; e.currentTarget.style.color = "var(--text)"; } }}
+                    onMouseLeave={e => { if (!isActive) { e.currentTarget.style.borderColor = "var(--glass-border-h)"; e.currentTarget.style.color = "var(--text-m)"; } }}
+                  >
+                    <span style={{
+                      width: 7, height: 7, borderRadius: "50%", flexShrink: 0,
+                      background: isActive ? m.color : "var(--text-d, #4a5270)",
+                      transition: "all 0.2s",
+                      boxShadow: isActive ? `0 0 6px ${m.color}40` : "none",
+                    }} />
+                    <span>{m.name}</span>
+                  </button>
+                );
+              })}
             </div>
           </div>
 
