@@ -206,15 +206,7 @@ function UsersIcon({ size = 14 }: { size?: number }) {
   );
 }
 
-function TimerIcon({ size = 14 }: { size?: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="7" cy="7.5" r="5" />
-      <path d="M7 4.5v3l2 1" />
-      <path d="M7 2.5V1.5" />
-    </svg>
-  );
-}
+
 
 function DragHandleIcon({ size = 14 }: { size?: number }) {
   return (
@@ -370,7 +362,7 @@ function TestForm() {
   const [stats, setStats] = useState<SessionStats | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [commentsCache, setCommentsCache] = useState<Record<string, TestComment[]>>({});
-  const [timerState, setTimerState] = useState<Record<string, { running: boolean; elapsed: number }>>({});
+
   const [dragOverId, setDragOverId] = useState<string | null>(null);
 
   /* ─── Toast helper ─── */
@@ -387,12 +379,7 @@ function TestForm() {
           const data = await res.json();
           setSession(data);
           setTitle(data.title);
-          // Initialize timer state from loaded items
-          const ts: Record<string, { running: boolean; elapsed: number }> = {};
-          for (const item of data.items) {
-            ts[item.id] = { running: false, elapsed: item.timeSpent || 0 };
-          }
-          setTimerState(ts);
+
         } else {
           showToast("Сессия не найдена", "error");
         }
@@ -496,7 +483,7 @@ function TestForm() {
     if (res.ok) {
       const newItem = await res.json();
       setSession(prev => prev ? { ...prev, items: [...prev.items, newItem] } : prev);
-      setTimerState(prev => ({ ...prev, [newItem.id]: { running: false, elapsed: 0 } }));
+
     }
   }, [session]);
 
@@ -543,7 +530,7 @@ function TestForm() {
             }
           : prev
       );
-      setTimerState(prev => { const n = { ...prev }; delete n[itemId]; return n; });
+
       setCommentsCache(prev => { const n = { ...prev }; delete n[itemId]; return n; });
       showToast("Тест-кейс удалён", "success");
     }
@@ -638,37 +625,7 @@ function TestForm() {
     updateItem(item.id, { priority: next });
   }, [updateItem]);
 
-  /* ─── Timer toggle ─── */
-  const toggleTimer = useCallback((itemId: string) => {
-    setTimerState(prev => {
-      const cur = prev[itemId] || { running: false, elapsed: 0 };
-      if (cur.running) {
-        // Pausing — save to DB
-        updateItem(itemId, { timeSpent: cur.elapsed });
-      }
-      return { ...prev, [itemId]: { running: !cur.running, elapsed: cur.elapsed } };
-    });
-  }, [updateItem]);
 
-  /* ─── Timer tick ─── */
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setTimerState(prev => {
-        let changed = false;
-        const next: Record<string, { running: boolean; elapsed: number }> = {};
-        for (const [id, t] of Object.entries(prev)) {
-          if (t.running) {
-            next[id] = { running: true, elapsed: t.elapsed + 1 };
-            changed = true;
-          } else {
-            next[id] = t;
-          }
-        }
-        return changed ? next : prev;
-      });
-    }, 1000);
-    return () => clearInterval(interval);
-  }, []);
 
   /* ─── Load comments ─── */
   const loadComments = useCallback(async (sessionId: string, itemId: string) => {
@@ -1314,7 +1271,6 @@ function TestForm() {
             isLast={idx === filteredItems.length - 1}
             sessionId={session.id}
             members={members}
-            timerInfo={timerState[item.id] || { running: false, elapsed: item.timeSpent || 0 }}
             comments={commentsCache[item.id] || null}
             isDragOver={dragOverId === item.id}
             onUpdate={(data) => updateItem(item.id, data)}
@@ -1324,7 +1280,6 @@ function TestForm() {
             onUploadScreenshot={(file) => uploadScreenshot(item.id, file)}
             onCycleStatus={() => cycleStatus(item)}
             onCyclePriority={() => cyclePriority(item)}
-            onToggleTimer={() => toggleTimer(item.id)}
             onLoadComments={() => loadComments(session.id, item.id)}
             onAddComment={(author, text) => addComment(session.id, item.id, author, text)}
             fileInputRef={(el) => { fileInputRefs.current[item.id] = el; }}
@@ -1376,9 +1331,9 @@ function TestForm() {
 /* ─── TEST ITEM CARD ─── */
 /* ═══════════════════════════════════════════════════════════════ */
 function TestItemCard({
-  item, index, isLast, sessionId, members, timerInfo, comments, isDragOver,
+  item, index, isLast, sessionId, members, comments, isDragOver,
   onUpdate, onDelete, onDuplicate, onAddAfter, onUploadScreenshot,
-  onCycleStatus, onCyclePriority, onToggleTimer,
+  onCycleStatus, onCyclePriority,
   onLoadComments, onAddComment,
   fileInputRef, triggerFileInput,
   onDragStart, onDragEnd, onDragOver, onDrop,
@@ -1388,7 +1343,6 @@ function TestItemCard({
   isLast: boolean;
   sessionId: string;
   members: SessionMember[];
-  timerInfo: { running: boolean; elapsed: number };
   comments: TestComment[] | null;
   isDragOver: boolean;
   onUpdate: (data: Partial<TestItem>) => void;
@@ -1398,7 +1352,7 @@ function TestItemCard({
   onUploadScreenshot: (file: File) => void;
   onCycleStatus: () => void;
   onCyclePriority: () => void;
-  onToggleTimer: () => void;
+
   onLoadComments: () => void;
   onAddComment: (author: string, text: string) => void;
   fileInputRef: (el: HTMLInputElement | null) => void;
@@ -1415,7 +1369,6 @@ function TestItemCard({
   const [commentAuthor, setCommentAuthor] = useState("");
   const [showAuthorPicker, setShowAuthorPicker] = useState(false);
   const [commentsExpanded, setCommentsExpanded] = useState(false);
-  const saveTimerRef = useRef<ReturnType<typeof setTimeout>>();
   const cardInteracted = useRef(false);
 
   const priorityCfg = PRIORITY_CONFIG[item.priority] || PRIORITY_CONFIG.medium;
@@ -1432,9 +1385,10 @@ function TestItemCard({
   }, [onLoadComments]);
 
   // Debounced save
+  const debounceRef = useRef<ReturnType<typeof setTimeout>>();
   const debouncedUpdate = useCallback((field: keyof TestItem, value: string) => {
-    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
-    saveTimerRef.current = setTimeout(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
       onUpdate({ [field]: value });
     }, 400);
   }, [onUpdate]);
@@ -1554,21 +1508,7 @@ function TestItemCard({
           {priorityCfg.label}
         </button>
 
-        {/* Timer */}
-        <button onClick={onToggleTimer} title={timerInfo.running ? "Пауза" : "Старт"} style={{
-          display: "inline-flex", alignItems: "center", gap: 4,
-          padding: "3px 8px", borderRadius: 10, border: "none",
-          background: timerInfo.running ? "rgba(16,185,129,0.15)" : "rgba(255,255,255,0.05)",
-          color: timerInfo.running ? "var(--accent)" : "var(--text-d)",
-          fontSize: 10, fontWeight: 600, cursor: "pointer",
-          fontFamily: "'JetBrains Mono', monospace", transition: "all 0.15s",
-        }}
-          onMouseEnter={e => e.currentTarget.style.background = timerInfo.running ? "rgba(16,185,129,0.25)" : "rgba(255,255,255,0.1)"}
-          onMouseLeave={e => e.currentTarget.style.background = timerInfo.running ? "rgba(16,185,129,0.15)" : "rgba(255,255,255,0.05)"}
-        >
-          <span style={{ fontSize: 11 }}>{timerInfo.running ? "⏸" : "⏱"}</span>
-          {formatTime(timerInfo.elapsed)}
-        </button>
+
 
         {/* Assignee Avatar */}
         {item.assignee ? (
